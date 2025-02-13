@@ -1,5 +1,5 @@
 dataset= 'Tusimple'
-data_root= '../dataset/TUSimple' # Need to be modified before running
+data_root= '/content/KhoaLuanTotNghiep/Cascade-LD/TUSimple' # Need to be modified before running
 epoch= 3
 batch_size= 32
 optimizer= 'SGD'
