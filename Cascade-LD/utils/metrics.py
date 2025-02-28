@@ -22,67 +22,37 @@ class AccuracyMetric:
         self.total_points = 0
 
     def update(self, pred, gt):
-        pred = pred.cpu().data.numpy()
-        pred = np.argmax(pred, axis=1)
-        pred = converter(pred)
-        gt = gt.cpu().data.numpy()
-        gt = np.argmax(gt, axis=1)
-        gt = converter(gt)
-        self.correct_points += np.sum(pred == gt)
+        pred = torch.argmax(pred, dim=1)
+        pred = pred.flatten()
+        gt = torch.argmax(gt, dim=1)
+        gt = gt.flatten()
+        self.correct_points += torch.sum(pred == gt).item()
         self.total_points += len(gt)
     def get(self):
-        return self.correct_points / self.total_points if self.total_points > 0 else 0.0
+        return self.correct_points / (self.total_points + 1e-6)
 
 
-class FalsePositiveRate:
+class F1Metric:
     def __init__(self):
-        self.false_positives = 0
-        self.total_predictions = 0
-
+        self.tp = 0
+        self.fp = 0
+        self.fn = 0
     def reset(self):
-        self.false_positives = 0
-        self.total_predictions = 0
-
-    def update(self, F_pred, N_pred):
-        self.false_positives += F_pred
-        self.total_predictions += N_pred
-
+        self.tp = 0
+        self.fp = 0
+        self.fn = 0
+    def update(self, pred, gt):
+        num_classes = pred.shape[1]
+        pred = torch.argmax(pred, dim=1)
+        pred = pred.flatten()
+        gt = torch.argmax(gt, dim=1)
+        gt = gt.flatten()
+        for i in range(1, num_classes):
+            self.tp += torch.sum((pred == i) & (gt == i)).item()
+            self.fp += torch.sum((pred == i) & (gt != i)).item()
+            self.fn += torch.sum((pred != i) & (gt == i)).item()
     def get(self):
-        return self.false_positives / self.total_predictions if self.total_predictions > 0 else 0.0
-
-
-class FalseNegativeRate:
-    def __init__(self):
-        self.missed_predictions = 0
-        self.total_ground_truth = 0
-
-    def reset(self):
-        self.missed_predictions = 0
-        self.total_ground_truth = 0
-
-    def update(self, M_pred, N_gt):
-        self.missed_predictions += M_pred
-        self.total_ground_truth += N_gt
-
-    def get(self):
-        return self.missed_predictions / self.total_ground_truth if self.total_ground_truth > 0 else 0.0
-
-
-class IoUMetric:
-    def __init__(self):
-        self.intersections = 0
-        self.unions = 0
-
-    def reset(self):
-        self.intersections = 0
-        self.unions = 0
-
-    def update(self, intersection, union):
-        self.intersections += intersection
-        self.unions += union
-
-    def get(self):
-        return self.intersections / self.unions if self.unions > 0 else 0.0
+        return 2 * self.tp / (2 * self.tp + self.fp + self.fn + 1e-6)
 
 def update_metrics(metric_dict, pair_data):
     for i in range(len(metric_dict['name'])):

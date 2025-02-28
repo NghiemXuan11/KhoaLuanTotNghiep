@@ -1,5 +1,5 @@
 import torch
-from utils.metrics import AccuracyMetric, FalsePositiveRate, FalseNegativeRate, IoUMetric
+from utils.metrics import AccuracyMetric, F1Metric
 
 
 def get_optimizer(net,cfg):
@@ -25,7 +25,8 @@ def get_scheduler(optimizer, cfg, iters_per_epoch):
 def get_loss_dict(cfg):
     loss_dict = {
         'name': ['cls_ext'],
-        'op': [torch.nn.CrossEntropyLoss()],
+        # weight label
+        'op': [torch.nn.CrossEntropyLoss(weight=torch.tensor(cfg.weight_cls).cuda())],
         'weight': [1.0],
         'data_src': [('seg_preds', 'seg_labels')],
     }
@@ -36,9 +37,9 @@ def get_loss_dict(cfg):
 def get_metric_dict(cfg):
 
     metric_dict = {
-        'name': ['acc'], #, 'fpr', 'fnr', 'iou'],
-        'op': [AccuracyMetric()], #, FalsePositiveRate(), FalseNegativeRate(), IoUMetric()],
-        'data_src': [('seg_preds', 'seg_labels')] #, ('seg_preds', 'seg_labels'), ('seg_preds', 'seg_labels'), ('seg_preds', 'seg_labels')],
+        'name': ['acc','f1'],
+        'op': [AccuracyMetric(), F1Metric()],
+        'data_src': [('seg_preds', 'seg_labels'), ('seg_preds', 'seg_labels')],
     }
 
     assert len(metric_dict['name']) == len(metric_dict['op']) == len(metric_dict['data_src'])

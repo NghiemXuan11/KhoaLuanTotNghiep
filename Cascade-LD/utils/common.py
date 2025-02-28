@@ -20,7 +20,6 @@ def get_args():
     parser.add_argument('config', help = 'path to config file')
     parser.add_argument('--local_rank', type=int, default=0)
 
-    parser.add_argument('--dataset', default = None, type = str)
     parser.add_argument('--data_root', default = None, type = str)
     parser.add_argument('--epoch', default = None, type = int)
     parser.add_argument('--batch_size', default = None, type = int)
@@ -67,7 +66,7 @@ def merge_config():
     args = get_args().parse_args()
     cfg = Config.fromfile(args.config)
 
-    items = ['dataset','data_root','epoch','batch_size','optimizer','learning_rate',
+    items = ['data_root','epoch','batch_size','optimizer','learning_rate',
     'weight_decay','momentum','scheduler','steps','gamma','warmup','warmup_iters',
     'use_aux','backbone','sim_loss_w','shp_loss_w','note','log_path',
     'finetune','resume', 'test_model','test_work_dir', 'num_lanes', 'var_loss_power', 'train_width', 'train_height',
@@ -81,7 +80,9 @@ def merge_config():
 
 def inference(net, data_label):
     pred = net(data_label['images'])
-    res_dict = {'seg_preds': pred, 'seg_labels': data_label['seg_labels']}
+    seg_labels = data_label['seg_labels']
+
+    res_dict = {'seg_preds': pred, 'seg_labels': seg_labels}
 
     return res_dict
 
@@ -139,26 +140,13 @@ def get_model(cfg):
     return importlib.import_module('model.'+cfg.backbone.lower()).get_model(cfg)
 
 def get_train_loader(cfg):
-    if cfg.dataset == 'CULane':
-        train_loader = TrainCollect(cfg.batch_size, 4, cfg.data_root, os.path.join(cfg.data_root, 'list/train_gt.txt'),  
-                                cfg.train_width, cfg.train_height, cfg.num_lanes, cfg.dataset)
-    elif cfg.dataset == 'Tusimple':
-
-        train_loader = TrainCollect(cfg.batch_size, 4, cfg.data_root, os.path.join(cfg.data_root, 'train_gt.txt'),  
-                                cfg.train_width, cfg.train_height, cfg.num_lanes, cfg.dataset)
-    else:
-        raise NotImplementedError
+    train_loader = TrainCollect(cfg.batch_size, 4, cfg.data_root, os.path.join(cfg.data_root, 'train_gt.txt'),
+                                cfg.train_width, cfg.train_height, cfg.num_lanes)
     return train_loader 
 
 def get_test_loader(cfg):
-    if cfg.dataset == 'CULane':
-        test_loader = TestCollect(cfg.batch_size, 4, cfg.data_root, os.path.join(cfg.data_root, 'list/test.txt'),  
-                                cfg.train_width, cfg.train_height)
-    elif cfg.dataset == 'Tusimple':
-        test_loader = TestCollect(cfg.batch_size, 4, cfg.data_root, os.path.join(cfg.data_root, 'test.txt'),  
-                                cfg.train_width, cfg.train_height)
-    else:
-        raise NotImplementedError
+    test_loader = TestCollect(cfg.batch_size, 4, cfg.data_root, os.path.join(cfg.data_root, 'test.txt'),
+                                cfg.train_width, cfg.train_height, cfg.num_lanes)
     return test_loader
 
 def calc_loss(loss_dict, results, logger, global_step, epoch):
