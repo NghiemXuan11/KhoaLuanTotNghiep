@@ -1,4 +1,4 @@
-data_root= '../dataset/TUSimple' # Need to be modified before running
+data_root= '/content/KhoaLuanTotNghiep/Cascade-LD/TUSimple' # Need to be modified before running
 epoch= 50
 batch_size= 8
 optimizer= 'SGD'

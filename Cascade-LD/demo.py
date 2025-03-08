@@ -1,3 +1,4 @@
+import numpy as np
 import torch, os
 from utils.common import merge_config, get_model
 import cv2
@@ -31,10 +32,12 @@ if __name__ == "__main__":
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Mean và Std chuẩn của ImageNet
 ])
     image_tensor = transform(image).unsqueeze(0).cuda()
-    print(image_tensor)
+    # print(image_tensor)
     out_seg = net(image_tensor)
     out_seg = out_seg[0].argmax(dim=0).cpu().numpy()
-    print(out_seg.shape)
+    # print(out_seg.shape)
     im_seg = get_image_results(image, out_seg, cfg.train_height, cfg.train_width)
-    plt.imshow(im_seg)
-    plt.show()
+    # plt.imshow(im_seg)
+    # plt.show()
+    cv2.imwrite("/content/KhoaLuanTotNghiep/Cascade-LD/images/show.jpg", np.array(im_seg))
+    

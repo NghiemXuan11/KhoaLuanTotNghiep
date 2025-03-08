@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 
 # ---- CONFIG ----
-DATASET_PATH = "../dataset/TUSimple"  # Path to TuSimple dataset
+DATASET_PATH = "TUSimple"  # Path to TuSimple dataset
 TRAIN_LABEL_FILE = os.path.join(DATASET_PATH, "tusimple_anno_cache.json")  # Path to the label file
 TEST_LABEL_FILE = os.path.join(DATASET_PATH, "test_label.json")
 ORI_HEIGHT, ORI_WIDTH = 720, 1280
@@ -175,13 +175,13 @@ with open(TEST_LABEL_FILE, "r") as f:
         lines_gt = check_lines_valid_test(angles)
         line_txt = img_path+' '+mask_path
         if not lines_gt:
-            name_file = ann["raw_file"].replace('/','_')
-            img = cv2.imread(os.path.join(DATASET_PATH, img_path))
-            img = cv2.resize(img, (TRAIN_WIDTH, TRAIN_HEIGHT))
-            mask = cv2.imread(os.path.join(DATASET_PATH, mask_path), cv2.IMREAD_GRAYSCALE)
-            mask = cv2.resize(mask, (TRAIN_WIDTH, TRAIN_HEIGHT))
-            im_seg = get_image_results(img, mask, TRAIN_HEIGHT, TRAIN_WIDTH)
-            cv2.imwrite(DATASET_PATH+"/test_filter/"+name_file, np.array(im_seg))
+            # name_file = ann["raw_file"].replace('/','_')
+            # img = cv2.imread(os.path.join(DATASET_PATH, img_path))
+            # img = cv2.resize(img, (TRAIN_WIDTH, TRAIN_HEIGHT))
+            # mask = cv2.imread(os.path.join(DATASET_PATH, mask_path), cv2.IMREAD_GRAYSCALE)
+            # mask = cv2.resize(mask, (TRAIN_WIDTH, TRAIN_HEIGHT))
+            # im_seg = get_image_results(img, mask, TRAIN_HEIGHT, TRAIN_WIDTH)
+            # cv2.imwrite(DATASET_PATH+"/test_filter/"+name_file, np.array(im_seg))
             
             output_filter_file.write(line_txt + "\n")
             continue
