@@ -1,5 +1,6 @@
 import torch
 from utils.metrics import AccuracyMetric, F1Metric
+from utils.loss import BinaryCrossEntropy, InstanceLoss, FocalLoss
 
 
 def get_optimizer(net,cfg):
@@ -24,11 +25,10 @@ def get_scheduler(optimizer, cfg, iters_per_epoch):
 
 def get_loss_dict(cfg):
     loss_dict = {
-        'name': ['cls_ext'],
-        # weight label
-        'op': [torch.nn.CrossEntropyLoss(weight=torch.tensor(cfg.weight_cls).cuda())],
-        'weight': [1.0],
-        'data_src': [('seg_preds', 'seg_labels')],
+        'name': ['cls_ext', 'ins_ext', 'focus'],
+        'weight': [1.0, 1.0, 1.0], # loss weight
+        'op': [BinaryCrossEntropy(weight=torch.tensor(cfg.weight_cls).cuda()), InstanceLoss(), FocalLoss(alpha=torch.tensor(cfg.weight_cls).cuda(), reduction='mean')],
+        'data_src': [('seg_preds', 'seg_labels'), ('seg_preds', 'seg_labels'), ('seg_preds', 'seg_labels')],
     }
     
     assert len(loss_dict['name']) == len(loss_dict['op']) == len(loss_dict['data_src']) == len(loss_dict['weight'])
@@ -37,9 +37,9 @@ def get_loss_dict(cfg):
 def get_metric_dict(cfg):
 
     metric_dict = {
-        'name': ['acc','f1'],
-        'op': [AccuracyMetric(), F1Metric()],
-        'data_src': [('seg_preds', 'seg_labels'), ('seg_preds', 'seg_labels')],
+        'name': ['acc'],#'f1'],
+        'op': [AccuracyMetric()],# F1Metric()],
+        'data_src': [('seg_preds', 'seg_labels')],# ('seg_preds', 'seg_labels')],
     }
 
     assert len(metric_dict['name']) == len(metric_dict['op']) == len(metric_dict['data_src'])
@@ -67,7 +67,7 @@ class MultiStepLR:
             for group, lr in zip(self.optimizer.param_groups, self.base_lr):
                 group['lr'] = lr * rate
             return
-        
+
         # multi policy
         if self.iters % self.iters_per_epoch == 0:
             epoch = int(self.iters / self.iters_per_epoch)
@@ -79,7 +79,7 @@ class MultiStepLR:
             if power == -1:
                 power = len(self.steps)
             # print(self.iters, self.iters_per_epoch, self.steps, power)
-            
+
             for group, lr in zip(self.optimizer.param_groups, self.base_lr):
                 group['lr'] = lr * (self.gamma ** power)
 import math
@@ -103,10 +103,9 @@ class CosineAnnealingLR:
             for group, lr in zip(self.optimizer.param_groups, self.base_lr):
                 group['lr'] = lr * rate
             return
-        
+
         # cos policy
 
         for group, lr in zip(self.optimizer.param_groups, self.base_lr):
             group['lr'] = self.eta_min + (lr - self.eta_min) * (1 + math.cos(math.pi * self.iters / self.T_max)) / 2
 
-        

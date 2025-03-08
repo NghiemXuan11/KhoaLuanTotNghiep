@@ -1,0 +1,17 @@
+data_root= '../dataset/TUSimple' # Need to be modified before running
+batch_size= 16
+scheduler= 'multi'
+backbone= 'erfnet'
+note= ''
+log_path= ''
+test_model= 'pretrained/model_best.pth'
+test_work_dir= ''
+num_lanes= 4
+var_loss_power= 2.0
+auto_backup= True
+crop_ratio = 1
+train_width= 640
+train_height= 360
+fc_norm= False
+soft_loss= True
+eval_mode= 'normal'

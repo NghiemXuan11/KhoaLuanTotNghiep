@@ -33,9 +33,6 @@ def get_args():
     parser.add_argument('--warmup', default = None, type = str)
     parser.add_argument('--warmup_iters', default = None, type = int)
     parser.add_argument('--backbone', default = None, type = str)
-    parser.add_argument('--use_aux', default = None, type = str2bool)
-    parser.add_argument('--sim_loss_w', default = None, type = float)
-    parser.add_argument('--shp_loss_w', default = None, type = float)
     parser.add_argument('--note', default = None, type = str)
     parser.add_argument('--log_path', default = None, type = str)
     parser.add_argument('--finetune', default = None, type = str)
@@ -47,7 +44,6 @@ def get_args():
     parser.add_argument('--var_loss_power', default = None, type = float)
     parser.add_argument('--train_width', default = None, type = int)
     parser.add_argument('--train_height', default = None, type = int)
-    parser.add_argument('--mean_loss_w', default = None, type = float)
     parser.add_argument('--fc_norm', default = None, type = str2bool)
     parser.add_argument('--soft_loss', default = None, type = str2bool)
     parser.add_argument('--eval_mode', default = None, type = str)
@@ -67,10 +63,9 @@ def merge_config():
     cfg = Config.fromfile(args.config)
 
     items = ['data_root','epoch','batch_size','optimizer','learning_rate',
-    'weight_decay','momentum','scheduler','steps','gamma','warmup','warmup_iters',
-    'use_aux','backbone','sim_loss_w','shp_loss_w','note','log_path',
+    'weight_decay','momentum','scheduler','steps','gamma','warmup','warmup_iters','backbone','note','log_path',
     'finetune','resume', 'test_model','test_work_dir', 'num_lanes', 'var_loss_power', 'train_width', 'train_height',
-    'mean_loss_w','fc_norm','soft_loss', 'eval_mode', 'eval_during_training', 'split_channel', 'match_method', 'selected_lane', 'cumsum', 'masked']
+    'fc_norm', 'eval_mode', 'eval_during_training', 'split_channel', 'match_method', 'selected_lane', 'cumsum', 'masked']
     for item in items:
         if getattr(args, item) is not None:
             print('merge ', item, ' config')
@@ -140,13 +135,13 @@ def get_model(cfg):
     return importlib.import_module('model.'+cfg.backbone.lower()).get_model(cfg)
 
 def get_train_loader(cfg):
-    train_loader = TrainCollect(cfg.batch_size, 4, cfg.data_root, os.path.join(cfg.data_root, 'train_gt.txt'),
-                                cfg.train_width, cfg.train_height, cfg.num_lanes)
+    train_loader = TrainCollect(cfg.batch_size, 4, cfg.data_root, os.path.join(cfg.data_root, 'train_gt_filtered.txt'),
+                                cfg.train_width, cfg.train_height, cfg.crop_ratio, cfg.num_lanes)
     return train_loader 
 
 def get_test_loader(cfg):
-    test_loader = TestCollect(cfg.batch_size, 4, cfg.data_root, os.path.join(cfg.data_root, 'test.txt'),
-                                cfg.train_width, cfg.train_height, cfg.num_lanes)
+    test_loader = TestCollect(cfg.batch_size, 4, cfg.data_root, os.path.join(cfg.data_root, 'test_gt_filtered.txt'),
+                                cfg.train_width, cfg.train_height, cfg.crop_ratio, cfg.num_lanes)
     return test_loader
 
 def calc_loss(loss_dict, results, logger, global_step, epoch):

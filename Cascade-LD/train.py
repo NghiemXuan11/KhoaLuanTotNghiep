@@ -19,7 +19,7 @@ from utils.eval import eval_lane
 
 def train(net, data_loader, loss_dict, optimizer, scheduler,logger, epoch, metric_dict):
     net.train()
-    progress_bar = tqdm.tqdm(train_loader)
+    progress_bar = tqdm.tqdm(train_loader, desc="epoch "+str(epoch+1))
     for b_idx, data_label in enumerate(progress_bar):
         global_step = epoch * len(data_loader) + b_idx
 
@@ -74,9 +74,11 @@ if __name__ == "__main__":
         state_all = torch.load(cfg.finetune)['model']
         state_clip = {}  # only use backbone parameters
         for k,v in state_all.items():
-            if 'model' in k:
+            if 'module.' in k:
+                state_clip[k[7:]] = v
+            else:
                 state_clip[k] = v
-        net.load_state_dict(state_clip, strict=False)
+        net.load_state_dict(state_clip, strict = True)
     if cfg.resume is not None:
         print('==> Resume model from ' + cfg.resume)
         resume_dict = torch.load(cfg.resume, map_location='cpu')
@@ -94,7 +96,6 @@ if __name__ == "__main__":
     max_res = 0
     res = None
     for epoch in range(resume_epoch, cfg.epoch):
-        print('epoch:', epoch+1)
         train(net, train_loader, loss_dict, optimizer, scheduler,logger, epoch, metric_dict)
         train_loader.reset()
 
